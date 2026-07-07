@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=360">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gasoek+One&family=Gugi&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      width: 360px;
+      height: 640px;
+      background: linear-gradient(160deg, #0d0b1e 0%, #080810 55%, #100818 100%);
+      font-family: 'Noto Sans KR', sans-serif;
+      color: #ffffff;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Ambient glow layer */
+    body::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 60% 40% at 25% 15%, rgba(130, 60, 255, 0.12) 0%, transparent 70%),
+        radial-gradient(ellipse 50% 35% at 80% 85%, rgba(0, 160, 255, 0.07) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      padding: 60px 28px 80px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    /* ── Title ──────────────────────────────────────────── */
+    .title {
+      font-family: '{{ header_font }}', sans-serif;
+      font-size: 34px;
+      line-height: 1.18;
+      letter-spacing: -0.5px;
+      color: #ffffff;
+      text-shadow:
+        0 0 24px rgba(160, 100, 255, 0.65),
+        0 0 60px rgba(130, 60, 255, 0.25);
+      word-break: keep-all;
+    }
+
+    /* ── Hook ───────────────────────────────────────────── */
+    .hook {
+      font-size: 12.5px;
+      font-weight: 400;
+      color: #c4b5fd;
+      line-height: 1.65;
+      letter-spacing: 0.1px;
+      word-break: keep-all;
+    }
+
+    /* ── Divider ────────────────────────────────────────── */
+    .divider {
+      width: 36px;
+      height: 2px;
+      background: linear-gradient(90deg, #7c3aed 0%, rgba(124, 58, 237, 0) 100%);
+      box-shadow: 0 0 8px rgba(124, 58, 237, 0.9);
+      flex-shrink: 0;
+    }
+
+    /* ── VARIANT: numbered_list ─────────────────────────── */
+    .body-numbered {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-evenly;
+      gap: 8px;
+    }
+    .body-numbered .point {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      background: rgba(255, 255, 255, 0.035);
+      border: 1px solid rgba(124, 58, 237, 0.18);
+      padding: 10px 12px;
+      box-shadow:
+        inset 0 0 14px rgba(120, 60, 255, 0.06),
+        0 0 0 0 transparent;
+    }
+    .body-numbered .num {
+      font-family: '{{ header_font }}', sans-serif;
+      font-size: 19px;
+      color: #a78bfa;
+      text-shadow: 0 0 10px rgba(167, 139, 250, 0.8);
+      min-width: 22px;
+      line-height: 1.45;
+      flex-shrink: 0;
+    }
+    .body-numbered .text {
+      font-size: 12.5px;
+      font-weight: 500;
+      color: #e2e8f0;
+      line-height: 1.55;
+      word-break: keep-all;
+    }
+
+    /* ── VARIANT: accent_line ───────────────────────────── */
+    .body-accent {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-evenly;
+    }
+    .body-accent .point {
+      border-left: 3px solid #7c3aed;
+      box-shadow: -3px 0 16px rgba(124, 58, 237, 0.45);
+      padding: 7px 0 7px 14px;
+      font-size: 13px;
+      font-weight: 500;
+      color: #e2e8f0;
+      line-height: 1.6;
+      word-break: keep-all;
+    }
+
+    /* ── VARIANT: grid ──────────────────────────────────── */
+    .body-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      align-content: start;
+    }
+    .body-grid .point {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(124, 58, 237, 0.22);
+      padding: 14px 10px;
+      font-size: 12px;
+      font-weight: 500;
+      color: #e2e8f0;
+      line-height: 1.5;
+      word-break: keep-all;
+      box-shadow:
+        0 0 18px rgba(124, 58, 237, 0.07),
+        inset 0 0 10px rgba(120, 60, 255, 0.04);
+      display: flex;
+      align-items: center;
+    }
+
+    /* ── VARIANT: full_bleed ────────────────────────────── */
+    .body-full-bleed {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      gap: 18px;
+    }
+    .body-full-bleed .big-text {
+      font-family: '{{ header_font }}', sans-serif;
+      font-size: 26px;
+      line-height: 1.4;
+      color: #ffffff;
+      text-shadow:
+        0 0 32px rgba(160, 100, 255, 0.6),
+        0 0 80px rgba(130, 60, 255, 0.2);
+      word-break: keep-all;
+    }
+    .body-full-bleed .sub-text {
+      font-size: 13px;
+      font-weight: 400;
+      color: #94a3b8;
+      line-height: 1.65;
+      word-break: keep-all;
+    }
+
+    /* ── Tags ───────────────────────────────────────────── */
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: auto;
+      padding-top: 6px;
+    }
+    .tag {
+      font-size: 10px;
+      font-weight: 400;
+      color: #4b5563;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      padding: 3px 8px;
+      letter-spacing: 0.2px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+
+    <h1 class="title">{{ title }}</h1>
+    <p class="hook">{{ hook }}</p>
+    <div class="divider"></div>
+
+    {# ── numbered_list ── #}
+    {% if variant == 'numbered_list' %}
+    <div class="body-numbered">
+      {% for point in body_points %}
+      <div class="point">
+        <span class="num">{{ loop.index }}</span>
+        <span class="text">{{ point }}</span>
+      </div>
+      {% endfor %}
+    </div>
+
+    {# ── accent_line ── #}
+    {% elif variant == 'accent_line' %}
+    <div class="body-accent">
+      {% for point in body_points %}
+      <div class="point">{{ point }}</div>
+      {% endfor %}
+    </div>
+
+    {# ── grid ── #}
+    {% elif variant == 'grid' %}
+    <div class="body-grid">
+      {% for point in body_points %}
+      <div class="point">{{ point }}</div>
+      {% endfor %}
+    </div>
+
+    {# ── full_bleed ── #}
+    {% elif variant == 'full_bleed' %}
+    <div class="body-full-bleed">
+      <p class="big-text">{{ body_points[0] }}</p>
+      {% for point in body_points[1:] %}
+      <p class="sub-text">{{ point }}</p>
+      {% endfor %}
+    </div>
+
+    {% endif %}
+
+    <div class="tags">
+      {% for tag in tags[:6] %}
+      <span class="tag">#{{ tag }}</span>
+      {% endfor %}
+    </div>
+
+  </div>
+</body>
+</html>

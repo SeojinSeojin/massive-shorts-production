@@ -1,0 +1,56 @@
+name: Post YouTube Short
+
+on:
+  schedule:
+    - cron: '0 0,4,8,12,16,20 * * *'   # every 4 hours
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: 'Dry run — build MP4 but skip YouTube upload'
+        type: boolean
+        default: true
+
+jobs:
+  post:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install ffmpeg
+        run: sudo apt-get install -y ffmpeg
+
+      - name: Install Python packages
+        run: pip install -r youtube-bot/requirements.txt
+
+      - name: Install Playwright browser
+        run: playwright install chromium --with-deps
+
+      - name: Write OAuth token
+        if: ${{ inputs.dry_run != 'true' }}
+        run: echo "$YOUTUBE_TOKEN_JSON" > youtube-bot/token.json
+        env:
+          YOUTUBE_TOKEN_JSON: ${{ secrets.YOUTUBE_TOKEN_JSON }}
+
+      - name: Run bot
+        run: python youtube-bot/app.py
+        env:
+          OAUTH_TOKEN_PATH: ${{ github.workspace }}/youtube-bot/token.json
+          YOUTUBE_CLIENT_ID: ${{ secrets.YOUTUBE_CLIENT_ID }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets.YOUTUBE_CLIENT_SECRET }}
+          PIXABAY_API_KEY: ${{ secrets.PIXABAY_API_KEY }}
+          DRY_RUN: ${{ inputs.dry_run || 'false' }}
+
+      - name: Commit updated queue
+        if: ${{ inputs.dry_run != 'true' }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add saju-posts/queue.json
+          git diff --staged --quiet || git commit -m "chore: mark item as posted [skip ci]" && git push
