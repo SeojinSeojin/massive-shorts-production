@@ -2,21 +2,13 @@
 topic: "사주"
 channel_name: "saju_daily"
 
-# ── Paths (relative to repo root) ─────────────────────────────────────────────
-kb_path: "./topics/saju/kb"
-planning_prompt_path: "./topics/saju/planning_prompt.txt"
-history_path: "./topics/saju/history.json"
+# ── Card queue (relative to repo root) ────────────────────────────────────────
+# Drop pre-generated standalone HTML cards into cards_dir. queue.json records
+# which cards have already been posted; anything not recorded is "pending".
+cards_dir: "./topics/saju/cards"
+queue_path: "./topics/saju/queue.json"
 
-# ── Template ──────────────────────────────────────────────────────────────────
-template: "card_style_a"
-
-# ── Phase 1 — Planning (Claude) ───────────────────────────────────────────────
-planning:
-  model: "claude-opus-4-8"
-  max_tokens: 1024
-  history_lookback: 30        # how many past entries to send Claude to avoid repeats
-
-# ── Phase 2 — Production ──────────────────────────────────────────────────────
+# ── Production ────────────────────────────────────────────────────────────────
 production:
   short_duration_secs: 7
   audio:
@@ -25,6 +17,8 @@ production:
     local_path: ""            # used only when mode=local
 
 # ── YouTube metadata ──────────────────────────────────────────────────────────
+# Per-card title/description/tags come from the card HTML <head>. These are
+# appended/defaults applied on top.
 youtube:
   title_suffix: " #Shorts"
   description_footer: "\n\n#Shorts #사주 #운명 #오늘의운세 #사주팔자"
@@ -32,5 +26,5 @@ youtube:
   privacy: "public"
   made_for_kids: false
 
-# ── Schedule (documentation only — enforced in GH Actions matrix) ─────────────
+# ── Schedule (documentation only — enforced in GH Actions) ────────────────────
 upload_schedule: "0 9 * * *"

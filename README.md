@@ -1,49 +1,55 @@
 # yt-auto
 
-Automated pipeline that plans, renders, and posts YouTube Shorts on a schedule. Content is generated per "topic" (currently `saju`, Korean fortune-telling cards) using Claude for planning, an HTML/Jinja2 template rendered via headless Chromium for the visual card, ffmpeg for video assembly, and the YouTube Data API for upload.
+Automated pipeline that renders pre-generated HTML cards into YouTube Shorts and posts them on a schedule. Content is organized per "topic" (currently `saju`, Korean fortune-telling cards). You author the visual cards as standalone HTML files (e.g. locally with Claude Code); the pipeline turns each into a 1080x1920 video with headless Chromium + ffmpeg and uploads it via the YouTube Data API.
 
 ## How it works
 
-The pipeline runs in two phases, driven by [app.py](app.py):
+You drop standalone HTML cards into `topics/<topic>/cards/`. Each run, [app.py](app.py) picks the oldest card that hasn't been posted yet and produces + uploads it:
 
-1. **Plan** ([pipeline/planner.py](pipeline/planner.py))
-   Calls Claude with the topic's knowledge base ([topics/\<topic\>/kb/](topics/saju/kb)), style prompt ([topics/\<topic\>/planning_prompt.txt](topics/saju/planning_prompt.txt)), and recent post history (to avoid repeating titles/angles). Returns a structured JSON plan (title, hook, body points, tags, layout variant) written to `topics/<topic>/runs/<date>/plan.json`, and appends an entry to `topics/<topic>/history.json`.
+1. **Queue** ([pipeline/card_queue.py](pipeline/card_queue.py))
+   The `cards/` folder is the source of truth for *what* to post; `topics/<topic>/queue.json` is the ledger of *what has already been posted*. Any `.html` file in `cards/` not yet recorded in `queue.json` is "pending". Cards are processed oldest-first (by filename).
 
-2. **Produce** ([pipeline/renderer.py](pipeline/renderer.py), [pipeline/media_pipeline.py](pipeline/media_pipeline.py), [pipeline/audio_fetcher.py](pipeline/audio_fetcher.py), [pipeline/youtube_upload.py](pipeline/youtube_upload.py))
-   - Renders the plan into HTML using the topic's Jinja2 template ([templates/card_style_a](templates/card_style_a)).
-   - Screenshots the HTML to a 1080x1920 PNG via Playwright.
+2. **Produce** ([pipeline/media_pipeline.py](pipeline/media_pipeline.py), [pipeline/audio_fetcher.py](pipeline/audio_fetcher.py), [pipeline/youtube_upload.py](pipeline/youtube_upload.py))
+   - Screenshots the card HTML to a 1080x1920 PNG via Playwright.
    - Fetches background audio (Pixabay API, a local folder, or none).
    - Composites image + audio into an MP4 with ffmpeg.
-   - Uploads the MP4 as a YouTube Short via OAuth, writing the resulting `video_id` back into `plan.json` and `history.json`.
+   - Uploads the MP4 as a YouTube Short via OAuth, then records the card + `video_id` in `queue.json`.
 
-Re-running `plan` for a date that already has a `plan.json` is a no-op, so `produce` can be retried independently after a failure without generating a new plan.
+### Card format
+
+Each card is a self-contained HTML file (360x640 viewport, rendered at 3x). Its YouTube metadata is read from the `<head>`:
+
+```html
+<title>오늘의 금전운</title>                                <!-- video title -->
+<meta name="description" content="사주로 보는 오늘의 재물운">   <!-- description -->
+<meta name="tags" content="사주, 운세, 금전운, 오늘의운세">      <!-- comma-separated tags -->
+```
+
+`topics/<topic>/config.yaml` applies a `title_suffix`, `description_footer`, category, and privacy on top. [templates/card_style_a](templates/card_style_a) is kept as a reference layout you can copy when authoring cards.
 
 ## Directory structure
 
 ```
-app.py                        CLI entrypoint (plan / produce / all / auth)
+app.py                        CLI entrypoint (run / auth)
 pipeline/
-  planner.py                  Claude call → structured content plan
-  renderer.py                 Plan JSON → HTML (Jinja2)
+  card_queue.py               Card discovery + queue.json ledger + <head> metadata parsing
   media_pipeline.py           HTML → PNG (Playwright) → MP4 (ffmpeg)
   audio_fetcher.py            Background music (Pixabay / local / none)
   youtube_upload.py           OAuth + YouTube Data API upload
 templates/
-  card_style_a/                Jinja2 card template (4 layout variants)
+  card_style_a/               Reference card layout
 topics/
   saju/
-    config.yaml                Per-topic settings (model, template, YouTube metadata, schedule)
-    planning_prompt.txt         System prompt sent to Claude
-    kb/                          Knowledge base files fed to Claude as context
-    history.json                 Log of past posts (title/angle/video_id) for dedup
-    runs/<date>/plan.json        Generated plan per run (created at runtime)
+    config.yaml               Per-topic settings (paths, audio, YouTube metadata)
+    cards/                     Pre-generated HTML cards you author
+    queue.json                Ledger of already-posted cards
 reference/                     Superseded v1 implementation, kept for history
 .github/workflows/post-shorts.yml   Scheduled GitHub Actions runner
 ```
 
 ## Adding a new topic/channel
 
-1. Create `topics/<new_topic>/config.yaml`, `planning_prompt.txt`, and `kb/` (copy `topics/saju` as a starting point).
+1. Create `topics/<new_topic>/config.yaml` and a `cards/` folder (copy `topics/saju` as a starting point).
 2. Add a matrix entry in [.github/workflows/post-shorts.yml](.github/workflows/post-shorts.yml) with the topic name and its YouTube OAuth secret names (a commented-out example is already there).
 3. Add the corresponding `YOUTUBE_CLIENT_ID_<TOPIC>`, `YOUTUBE_CLIENT_SECRET_<TOPIC>`, `YOUTUBE_TOKEN_JSON_<TOPIC>` secrets to the repo.
 
@@ -59,11 +65,10 @@ brew install ffmpeg   # or apt-get install ffmpeg
 
 | Variable | Required for | Notes |
 |---|---|---|
-| `ANTHROPIC_API_KEY` | plan phase | Claude API key |
-| `PIXABAY_API_KEY` | produce phase | only if a topic's `production.audio.mode` is `pixabay` |
-| `YOUTUBE_CLIENT_ID` / `YOUTUBE_CLIENT_SECRET` | produce phase, auth | OAuth client credentials (Google Cloud Console) |
-| `OAUTH_TOKEN_PATH` | produce phase, auth | where the OAuth token is read/written; defaults to `token.json` |
-| `DRY_RUN` | produce phase | `true` builds the MP4 but skips the YouTube upload |
+| `PIXABAY_API_KEY` | produce | only if a topic's `production.audio.mode` is `pixabay` |
+| `YOUTUBE_CLIENT_ID` / `YOUTUBE_CLIENT_SECRET` | produce, auth | OAuth client credentials (Google Cloud Console) |
+| `OAUTH_TOKEN_PATH` | produce, auth | where the OAuth token is read/written; defaults to `token.json` |
+| `DRY_RUN` | produce | `true` builds the MP4 but skips the YouTube upload (and the queue ledger) |
 
 ### One-time YouTube auth
 
@@ -75,19 +80,16 @@ Runs the OAuth consent flow locally and saves the token to `OAUTH_TOKEN_PATH`. C
 ## Usage
 
 ```bash
-# Full run for a topic
+# Post the next pending card for a topic
 python app.py --topic saju
 
-# Only generate today's plan
-python app.py --topic saju --phase plan
+# Post the next 3 pending cards
+python app.py --topic saju --count 3
 
-# Only render + upload (requires an existing plan.json for today)
-python app.py --topic saju --phase produce
-
-# Build the video without uploading
+# Build the video without uploading or recording it
 DRY_RUN=true python app.py --topic saju
 ```
 
 ## Automation
 
-[.github/workflows/post-shorts.yml](.github/workflows/post-shorts.yml) runs daily at 09:00 UTC across every topic in its matrix (`fail-fast: false`, so one topic failing doesn't block the others). It can also be triggered manually (`workflow_dispatch`) with an optional single-topic filter, phase override, and dry-run flag. On success it commits the updated `history.json` and `runs/` directory back to the repo.
+[.github/workflows/post-shorts.yml](.github/workflows/post-shorts.yml) runs daily at 09:00 UTC across every topic in its matrix (`fail-fast: false`, so one topic failing doesn't block the others). It can also be triggered manually (`workflow_dispatch`) with an optional single-topic filter, a per-topic card count, and a dry-run flag. On success it commits the updated `queue.json` back to the repo.
