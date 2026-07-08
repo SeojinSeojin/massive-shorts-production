@@ -19,31 +19,43 @@ on:
         default: false
 
 jobs:
+  # ── Discover topics automatically from the topics/ directory ────────────────
+  # Any folder containing a config.yaml becomes a channel. No YAML editing needed
+  # to add one — just drop in topics/<slug>/ and its <SLUG>_YOUTUBE_* secrets.
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.list.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build topic matrix
+        id: list
+        env:
+          TOPIC_FILTER: ${{ inputs.topic }}
+        run: |
+          topics=$(
+            for d in topics/*/; do
+              [ -f "${d}config.yaml" ] || continue
+              slug=$(basename "$d")
+              if [ -z "$TOPIC_FILTER" ] || [ "$TOPIC_FILTER" = "$slug" ]; then
+                echo "$slug"
+              fi
+            done | jq -R -s -c 'split("\n") | map(select(length > 0))'
+          )
+          echo "Discovered topics: $topics"
+          echo "matrix={\"topic\":$topics}" >> "$GITHUB_OUTPUT"
+
   post:
+    needs: discover
+    if: ${{ needs.discover.outputs.matrix != '' && needs.discover.outputs.matrix != '{"topic":[]}' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
 
     strategy:
       fail-fast: false            # one topic failing shouldn't cancel the others
-      matrix:
-        include:
-          - topic: saju
-            yt_client_id_secret:     YOUTUBE_CLIENT_ID_SAJU
-            yt_client_secret_secret: YOUTUBE_CLIENT_SECRET_SAJU
-            yt_token_secret:         YOUTUBE_TOKEN_JSON_SAJU
-          # ── Add a new channel: copy this block, change topic + secret names ──
-          # - topic: mbti
-          #   yt_client_id_secret:     YOUTUBE_CLIENT_ID_MBTI
-          #   yt_client_secret_secret: YOUTUBE_CLIENT_SECRET_MBTI
-          #   yt_token_secret:         YOUTUBE_TOKEN_JSON_MBTI
-          # - topic: zodiac
-          #   yt_client_id_secret:     YOUTUBE_CLIENT_ID_ZODIAC
-          #   yt_client_secret_secret: YOUTUBE_CLIENT_SECRET_ZODIAC
-          #   yt_token_secret:         YOUTUBE_TOKEN_JSON_ZODIAC
-
-    # Skip matrix rows that don't match a manual topic filter
-    if: ${{ inputs.topic == '' || inputs.topic == matrix.topic }}
+      matrix: ${{ fromJSON(needs.discover.outputs.matrix) }}
 
     steps:
       - uses: actions/checkout@v4
@@ -61,10 +73,12 @@ jobs:
       - name: Install Playwright browser
         run: playwright install chromium --with-deps
 
+      # Secret names follow the convention <SLUG>_YOUTUBE_* (context keys are
+      # case-insensitive, so the lowercase folder name matches uppercase secrets).
       - name: Write OAuth token
         run: echo "$YT_TOKEN_JSON" > token_${{ matrix.topic }}.json
         env:
-          YT_TOKEN_JSON: ${{ secrets[matrix.yt_token_secret] }}
+          YT_TOKEN_JSON: ${{ secrets[format('{0}_YOUTUBE_TOKEN_JSON', matrix.topic)] }}
 
       - name: Run pipeline
         run: |
@@ -73,8 +87,8 @@ jobs:
             --count ${{ inputs.count || '1' }}
         env:
           OAUTH_TOKEN_PATH:      token_${{ matrix.topic }}.json
-          YOUTUBE_CLIENT_ID:     ${{ secrets[matrix.yt_client_id_secret] }}
-          YOUTUBE_CLIENT_SECRET: ${{ secrets[matrix.yt_client_secret_secret] }}
+          YOUTUBE_CLIENT_ID:     ${{ secrets[format('{0}_YOUTUBE_CLIENT_ID', matrix.topic)] }}
+          YOUTUBE_CLIENT_SECRET: ${{ secrets[format('{0}_YOUTUBE_CLIENT_SECRET', matrix.topic)] }}
           PIXABAY_API_KEY:       ${{ secrets.PIXABAY_API_KEY }}
           DRY_RUN:               ${{ inputs.dry_run || 'false' }}
 
@@ -86,4 +100,4 @@ jobs:
           git add topics/${{ matrix.topic }}/queue.json
           git diff --staged --quiet || \
             git commit -m "chore(${{ matrix.topic }}): record $(date +%F) post [skip ci]"
-          git push
+          git pull --rebase --autostash && git push

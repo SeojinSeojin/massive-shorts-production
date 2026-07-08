@@ -49,9 +49,15 @@ reference/                     Superseded v1 implementation, kept for history
 
 ## Adding a new topic/channel
 
-1. Create `topics/<new_topic>/config.yaml` and a `cards/` folder (copy `topics/saju` as a starting point).
-2. Add a matrix entry in [.github/workflows/post-shorts.yml](.github/workflows/post-shorts.yml) with the topic name and its YouTube OAuth secret names (a commented-out example is already there).
-3. Add the corresponding `YOUTUBE_CLIENT_ID_<TOPIC>`, `YOUTUBE_CLIENT_SECRET_<TOPIC>`, `YOUTUBE_TOKEN_JSON_<TOPIC>` secrets to the repo.
+Topics are discovered automatically — the workflow scans `topics/` and runs one job per folder that contains a `config.yaml`. No workflow edit is needed.
+
+1. Create `topics/<slug>/config.yaml` and a `cards/` folder (copy `topics/saju` as a starting point).
+2. Add three repo secrets following the `<SLUG>_YOUTUBE_*` convention (uppercase the folder name):
+   `<SLUG>_YOUTUBE_CLIENT_ID`, `<SLUG>_YOUTUBE_CLIENT_SECRET`, `<SLUG>_YOUTUBE_TOKEN_JSON`.
+
+   e.g. for `topics/mbti/` → `MBTI_YOUTUBE_CLIENT_ID`, `MBTI_YOUTUBE_CLIENT_SECRET`, `MBTI_YOUTUBE_TOKEN_JSON`.
+
+If a topic folder exists but its secrets are missing, only that topic's job fails (`fail-fast: false` keeps the others running).
 
 ## Setup
 
@@ -92,4 +98,4 @@ DRY_RUN=true python app.py --topic saju
 
 ## Automation
 
-[.github/workflows/post-shorts.yml](.github/workflows/post-shorts.yml) runs daily at 09:00 UTC across every topic in its matrix (`fail-fast: false`, so one topic failing doesn't block the others). It can also be triggered manually (`workflow_dispatch`) with an optional single-topic filter, a per-topic card count, and a dry-run flag. On success it commits the updated `queue.json` back to the repo.
+[.github/workflows/post-shorts.yml](.github/workflows/post-shorts.yml) runs daily at 09:00 UTC. A `discover` job scans `topics/` and builds the job matrix automatically (one job per folder with a `config.yaml`); the `post` job then fans out across them (`fail-fast: false`, so one topic failing doesn't block the others). It can also be triggered manually (`workflow_dispatch`) with an optional single-topic filter, a per-topic card count, and a dry-run flag. On success each job commits its updated `queue.json` back to the repo.
