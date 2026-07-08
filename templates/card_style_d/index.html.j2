@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=360">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gasoek+One&family=Gugi&family=Noto+Sans+KR:wght@300;400;500;700;900&display=swap" rel="stylesheet">
+  <style>
+    /* ══════════════════════════════════════════════════════════════
+       card_style_d — "Mono Editorial"
+       Near-black, high-contrast, a single amber accent. Confident and
+       minimal — magazine cover energy. Great for punchy statements.
+       ══════════════════════════════════════════════════════════════ */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      width: 360px;
+      height: 640px;
+      background: #0f0f0f;
+      font-family: 'Noto Sans KR', sans-serif;
+      color: #f5f5f5;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Faint top rule + corner accent */
+    body::before {
+      content: '';
+      position: absolute;
+      top: 44px; left: 30px; right: 30px;
+      height: 1px;
+      background: rgba(255, 255, 255, 0.14);
+    }
+
+    .card {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      height: 100%;
+      padding: 64px 30px 70px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    /* Kicker (uses hook as an eyebrow label) */
+    .kicker {
+      position: absolute;
+      top: 26px; left: 30px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      color: #e8a33d;
+    }
+
+    /* ── Title ── */
+    .title {
+      font-family: 'Noto Sans KR', sans-serif;
+      font-size: 33px;
+      font-weight: 800;
+      line-height: 1.22;
+      letter-spacing: -0.4px;
+      color: #ffffff;
+      word-break: keep-all;
+    }
+    .title::after {
+      content: '';
+      display: block;
+      width: 46px;
+      height: 4px;
+      background: #e8a33d;
+      margin-top: 14px;
+    }
+
+    /* ── Hook ── */
+    .hook {
+      font-size: 12.5px;
+      font-weight: 300;
+      color: #9a9a9a;
+      line-height: 1.7;
+      letter-spacing: 0.1px;
+      word-break: keep-all;
+    }
+
+    /* ── VARIANT: numbered_list ── */
+    .body-numbered {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+    }
+    .body-numbered .point {
+      display: flex;
+      align-items: baseline;
+      gap: 14px;
+      padding: 13px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .body-numbered .num {
+      font-family: '{{ header_font }}', sans-serif;
+      font-size: 24px;
+      font-weight: 900;
+      color: #e8a33d;
+      min-width: 28px;
+      flex-shrink: 0;
+    }
+    .body-numbered .text {
+      font-size: 14.5px;
+      font-weight: 400;
+      color: #e6e6e6;
+      line-height: 1.55;
+      word-break: keep-all;
+    }
+
+    /* ── VARIANT: accent_line ── */
+    .body-accent {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      gap: 14px;
+    }
+    .body-accent .point {
+      padding: 9px 0 9px 16px;
+      position: relative;
+      font-size: 15.5px;
+      font-weight: 400;
+      color: #e6e6e6;
+      line-height: 1.6;
+      word-break: keep-all;
+    }
+    .body-accent .point::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 12px; bottom: 12px;
+      width: 3px;
+      background: #e8a33d;
+    }
+
+    /* ── VARIANT: grid ── */
+    .body-grid {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      grid-auto-rows: 1fr;
+      gap: 1px;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .body-grid .point {
+      background: #0f0f0f;
+      padding: 16px 12px;
+      font-size: 14px;
+      font-weight: 400;
+      color: #e6e6e6;
+      line-height: 1.5;
+      word-break: keep-all;
+      display: flex;
+      align-items: center;
+    }
+
+    /* ── Tags ── */
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: auto;
+      padding-top: 6px;
+    }
+    .tag {
+      font-size: 10px;
+      font-weight: 500;
+      color: #7a7a7a;
+      letter-spacing: 0.4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+
+    {% if tags %}<div class="kicker">{{ tags[0] }}</div>{% endif %}
+    <h1 class="title">{{ title }}</h1>
+    <p class="hook">{{ hook }}</p>
+
+    {# ── numbered_list ── #}
+    {% if variant == 'numbered_list' %}
+    <div class="body-numbered">
+      {% for point in body_points %}
+      <div class="point">
+        <span class="num">{{ '%02d' | format(loop.index) }}</span>
+        <span class="text">{{ point }}</span>
+      </div>
+      {% endfor %}
+    </div>
+
+    {# ── accent_line ── #}
+    {% elif variant == 'accent_line' %}
+    <div class="body-accent">
+      {% for point in body_points %}
+      <div class="point">{{ point }}</div>
+      {% endfor %}
+    </div>
+
+    {# ── grid ── #}
+    {% elif variant == 'grid' %}
+    <div class="body-grid">
+      {% for point in body_points %}
+      <div class="point">{{ point }}</div>
+      {% endfor %}
+    </div>
+
+    {% endif %}
+
+    <div class="tags">
+      {% for tag in tags[:6] %}
+      <span class="tag">#{{ tag }}</span>
+      {% endfor %}
+    </div>
+
+  </div>
+</body>
+</html>

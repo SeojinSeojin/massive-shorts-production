@@ -5,28 +5,33 @@
   <meta name="viewport" content="width=360">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gasoek+One&family=Gugi&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gasoek+One&family=Gugi&family=Jua&family=Noto+Sans+KR:wght@400;500;700;800&display=swap" rel="stylesheet">
   <style>
+    /* ══════════════════════════════════════════════════════════════
+       card_style_c — "Sunset Pop"
+       Bright, playful, warm sunset gradient with a frosted glass panel.
+       High-energy for lifestyle / fun content.
+       ══════════════════════════════════════════════════════════════ */
     *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
 
     body {
       width: 360px;
       height: 640px;
-      background: linear-gradient(160deg, #0d0b1e 0%, #080810 55%, #100818 100%);
+      background: linear-gradient(155deg, #ff7a59 0%, #ff5c8a 45%, #b14bd8 100%);
       font-family: 'Noto Sans KR', sans-serif;
       color: #ffffff;
       overflow: hidden;
       position: relative;
     }
 
-    /* Ambient glow layer */
+    /* Soft light blooms */
     body::before {
       content: '';
       position: absolute;
       inset: 0;
       background:
-        radial-gradient(ellipse 60% 40% at 25% 15%, rgba(130, 60, 255, 0.12) 0%, transparent 70%),
-        radial-gradient(ellipse 50% 35% at 80% 85%, rgba(0, 160, 255, 0.07) 0%, transparent 65%);
+        radial-gradient(ellipse 55% 35% at 20% 12%, rgba(255, 220, 150, 0.45) 0%, transparent 65%),
+        radial-gradient(ellipse 55% 40% at 85% 90%, rgba(120, 80, 255, 0.35) 0%, transparent 65%);
       pointer-events: none;
     }
 
@@ -35,44 +40,54 @@
       z-index: 1;
       width: 100%;
       height: 100%;
-      padding: 60px 28px 80px;
+      padding: 52px 26px 68px;
       display: flex;
       flex-direction: column;
       gap: 14px;
     }
 
-    /* ── Title ──────────────────────────────────────────── */
+    /* ── Title ── */
     .title {
       font-family: 'Noto Sans KR', sans-serif;
       font-weight: 800;
-      font-size: 30px;
+      font-size: 31px;
       line-height: 1.3;
       letter-spacing: -0.3px;
       color: #ffffff;
-      text-shadow: 0 0 16px rgba(150, 100, 255, 0.35);
+      text-shadow: 0 3px 14px rgba(120, 20, 90, 0.28);
       word-break: keep-all;
     }
 
-    /* ── Hook ───────────────────────────────────────────── */
+    /* ── Hook ── */
     .hook {
-      font-size: 13.5px;
-      font-weight: 400;
-      color: #c4b5fd;
+      font-size: 12.5px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.92);
       line-height: 1.65;
       letter-spacing: 0.1px;
       word-break: keep-all;
     }
 
-    /* ── Divider ────────────────────────────────────────── */
+    /* ── Divider ── */
     .divider {
-      width: 36px;
-      height: 2px;
-      background: linear-gradient(90deg, #7c3aed 0%, rgba(124, 58, 237, 0) 100%);
-      box-shadow: 0 0 8px rgba(124, 58, 237, 0.9);
+      width: 40px;
+      height: 3px;
+      border-radius: 3px;
+      background: rgba(255, 255, 255, 0.9);
       flex-shrink: 0;
     }
 
-    /* ── VARIANT: numbered_list ─────────────────────────── */
+    /* Shared frosted-glass look */
+    .glass {
+      background: rgba(255, 255, 255, 0.16);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      border-radius: 14px;
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      box-shadow: 0 6px 18px rgba(120, 30, 90, 0.14);
+    }
+
+    /* ── VARIANT: numbered_list ── */
     .body-numbered {
       flex: 1;
       display: flex;
@@ -84,18 +99,13 @@
       display: flex;
       align-items: flex-start;
       gap: 12px;
-      background: rgba(255, 255, 255, 0.035);
-      border: 1px solid rgba(124, 58, 237, 0.18);
-      padding: 12px 15px;
-      box-shadow:
-        inset 0 0 14px rgba(120, 60, 255, 0.06),
-        0 0 0 0 transparent;
+      padding: 12px 14px;
     }
     .body-numbered .num {
-      font-family: '{{ header_font }}', sans-serif;
+      font-family: '{{ header_font }}', 'Jua', sans-serif;
       font-size: 24px;
-      color: #a78bfa;
-      text-shadow: 0 0 10px rgba(167, 139, 250, 0.8);
+      color: #fff2b8;
+      text-shadow: 0 2px 8px rgba(120, 30, 0, 0.3);
       min-width: 26px;
       line-height: 1.35;
       flex-shrink: 0;
@@ -103,12 +113,12 @@
     .body-numbered .text {
       font-size: 14.5px;
       font-weight: 500;
-      color: #e2e8f0;
+      color: #ffffff;
       line-height: 1.5;
       word-break: keep-all;
     }
 
-    /* ── VARIANT: accent_line ───────────────────────────── */
+    /* ── VARIANT: accent_line ── */
     .body-accent {
       flex: 1;
       display: flex;
@@ -117,17 +127,16 @@
       gap: 14px;
     }
     .body-accent .point {
-      border-left: 3px solid #7c3aed;
-      box-shadow: -3px 0 16px rgba(124, 58, 237, 0.45);
-      padding: 10px 0 10px 16px;
+      border-left: 3px solid rgba(255, 255, 255, 0.9);
+      padding: 9px 0 9px 16px;
       font-size: 15.5px;
-      font-weight: 500;
-      color: #e2e8f0;
-      line-height: 1.55;
+      font-weight: 600;
+      color: #ffffff;
+      line-height: 1.6;
       word-break: keep-all;
     }
 
-    /* ── VARIANT: grid ──────────────────────────────────── */
+    /* ── VARIANT: grid ── */
     .body-grid {
       flex: 1;
       display: grid;
@@ -136,22 +145,17 @@
       gap: 10px;
     }
     .body-grid .point {
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(124, 58, 237, 0.22);
       padding: 14px 12px;
       font-size: 14px;
-      font-weight: 500;
-      color: #e2e8f0;
+      font-weight: 600;
+      color: #ffffff;
       line-height: 1.5;
       word-break: keep-all;
-      box-shadow:
-        0 0 18px rgba(124, 58, 237, 0.07),
-        inset 0 0 10px rgba(120, 60, 255, 0.04);
       display: flex;
       align-items: center;
     }
 
-    /* ── Tags ───────────────────────────────────────────── */
+    /* ── Tags ── */
     .tags {
       display: flex;
       flex-wrap: wrap;
@@ -161,11 +165,12 @@
     }
     .tag {
       font-size: 10px;
-      font-weight: 400;
-      color: #4b5563;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      padding: 3px 8px;
+      font-weight: 500;
+      color: rgba(255, 255, 255, 0.85);
+      background: rgba(255, 255, 255, 0.15);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 20px;
+      padding: 3px 9px;
       letter-spacing: 0.2px;
     }
   </style>
@@ -181,7 +186,7 @@
     {% if variant == 'numbered_list' %}
     <div class="body-numbered">
       {% for point in body_points %}
-      <div class="point">
+      <div class="point glass">
         <span class="num">{{ loop.index }}</span>
         <span class="text">{{ point }}</span>
       </div>
@@ -200,7 +205,7 @@
     {% elif variant == 'grid' %}
     <div class="body-grid">
       {% for point in body_points %}
-      <div class="point">{{ point }}</div>
+      <div class="point glass">{{ point }}</div>
       {% endfor %}
     </div>
 

@@ -25,7 +25,14 @@ Each card is a self-contained HTML file (360x640 viewport, rendered at 3x). Its 
 <meta name="tags" content="사주, 운세, 금전운, 오늘의운세">      <!-- comma-separated tags -->
 ```
 
-`topics/<topic>/config.yaml` applies a `title_suffix`, `description_footer`, category, and privacy on top. [templates/card_style_a](templates/card_style_a) is kept as a reference layout you can copy when authoring cards.
+`topics/<topic>/config.yaml` applies a `title_suffix`, `description_footer`, category, and privacy on top. The [templates/](templates/) directory holds reference layouts you can copy when authoring cards — each is a 360×640 mobile card with three body variants (`numbered_list`, `accent_line`, `grid`):
+
+- [card_style_a](templates/card_style_a) — dark neon-purple glow
+- [card_style_b](templates/card_style_b) — warm cream paper, ink serif
+- [card_style_c](templates/card_style_c) — bright sunset gradient, frosted glass
+- [card_style_d](templates/card_style_d) — near-black mono editorial with an amber accent
+
+The cards fill from the top down, so **fullness comes from content, not spacing** — write ~5 substantive body points of roughly 1–2 lines each. A card with only 2–3 short points will look empty; give each point real detail.
 
 ## Directory structure
 
@@ -37,7 +44,10 @@ pipeline/
   audio_fetcher.py            Background music (Pixabay / local / none)
   youtube_upload.py           OAuth + YouTube Data API upload
 templates/
-  card_style_a/               Reference card layout
+  card_style_a/               Reference card layout — dark neon
+  card_style_b/               Reference card layout — warm paper
+  card_style_c/               Reference card layout — sunset gradient
+  card_style_d/               Reference card layout — mono editorial
 topics/
   saju/
     config.yaml               Per-topic settings (paths, audio, YouTube metadata)
@@ -49,15 +59,70 @@ reference/                     Superseded v1 implementation, kept for history
 
 ## Adding a new topic/channel
 
-Topics are discovered automatically — the workflow scans `topics/` and runs one job per folder that contains a `config.yaml`. No workflow edit is needed.
+Topics are discovered automatically — the workflow scans `topics/` and runs one job per folder that contains a `config.yaml`. No workflow edit is needed. Below is a full walkthrough for adding an **`mbti`** channel.
 
-1. Create `topics/<slug>/config.yaml` and a `cards/` folder (copy `topics/saju` as a starting point).
-2. Add three repo secrets following the `<SLUG>_YOUTUBE_*` convention (uppercase the folder name):
-   `<SLUG>_YOUTUBE_CLIENT_ID`, `<SLUG>_YOUTUBE_CLIENT_SECRET`, `<SLUG>_YOUTUBE_TOKEN_JSON`.
+### 1. Scaffold the folder
 
-   e.g. for `topics/mbti/` → `MBTI_YOUTUBE_CLIENT_ID`, `MBTI_YOUTUBE_CLIENT_SECRET`, `MBTI_YOUTUBE_TOKEN_JSON`.
+Copy `saju` as a starting point, then clear the example's cards and ledger:
 
-If a topic folder exists but its secrets are missing, only that topic's job fails (`fail-fast: false` keeps the others running).
+```bash
+cp -r topics/saju topics/mbti
+rm -f topics/mbti/cards/*.html
+echo '{ "processed": [] }' > topics/mbti/queue.json
+```
+
+Edit `topics/mbti/config.yaml` for the new channel — at minimum the identity and paths:
+
+```yaml
+topic: "MBTI"
+channel_name: "mbti_daily"
+cards_dir: "./topics/mbti/cards"
+queue_path: "./topics/mbti/queue.json"
+
+youtube:
+  title_suffix: " #Shorts"
+  description_footer: "\n\n#Shorts #MBTI #성격유형 #심리테스트"
+  category_id: "22"
+  privacy: "public"
+  made_for_kids: false
+```
+
+### 2. Generate the cards with Claude Code
+
+Cards are just standalone HTML files. Open Claude Code in this repo and ask it to author them — point it at the reference layout so the style stays consistent. For example:
+
+> Look at `templates/card_style_a/index.html.j2` for the visual style (dark 360×640 vertical card, neon-purple glow, Korean web fonts). Create 5 standalone HTML cards in `topics/mbti/cards/`, one per file named `2026-07-10-<slug>.html`. Each card is a self-contained HTML file (all CSS inlined, no Jinja) about a fun MBTI insight. In each file's `<head>` put:
+> - `<title>` — the video title (≤ 25 chars, Korean OK)
+> - `<meta name="description">` — a one-line hook
+> - `<meta name="tags" content="...">` — 5–8 comma-separated tags, no `#`
+>
+> Keep the body to a punchy headline plus 3–4 short points so it reads in ~7 seconds.
+
+Claude Code writes the files directly into `topics/mbti/cards/`. Preview one in a browser, or dry-run the render without uploading:
+
+```bash
+DRY_RUN=true python app.py --topic mbti
+```
+
+Filenames are processed oldest-first, so a date prefix (`2026-07-10-...`) controls posting order.
+
+### 3. Add the channel's secrets
+
+Add three repo secrets following the `<SLUG>_YOUTUBE_*` convention (uppercase the folder name):
+
+- `MBTI_YOUTUBE_CLIENT_ID`
+- `MBTI_YOUTUBE_CLIENT_SECRET`
+- `MBTI_YOUTUBE_TOKEN_JSON`
+
+Generate the token by running the [one-time auth flow](#one-time-youtube-auth) with the `mbti` OAuth client, then paste `token.json`'s contents into `MBTI_YOUTUBE_TOKEN_JSON`.
+
+### 4. Commit
+
+```bash
+git add topics/mbti && git commit -m "feat(mbti): add channel"
+```
+
+The next scheduled (or manual) run picks up `mbti` automatically. If a topic folder exists but its secrets are missing, only that topic's job fails (`fail-fast: false` keeps the others running).
 
 ## Setup
 
@@ -81,7 +146,7 @@ brew install ffmpeg   # or apt-get install ffmpeg
 ```bash
 python app.py --auth
 ```
-Runs the OAuth consent flow locally and saves the token to `OAUTH_TOKEN_PATH`. Copy this token's contents into the topic's `YOUTUBE_TOKEN_JSON_*` GitHub secret for CI use.
+Runs the OAuth consent flow locally and saves the token to `OAUTH_TOKEN_PATH`. Copy this token's contents into the topic's `<SLUG>_YOUTUBE_TOKEN_JSON` GitHub secret for CI use.
 
 ## Usage
 
